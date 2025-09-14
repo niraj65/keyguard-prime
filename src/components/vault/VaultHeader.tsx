@@ -77,20 +77,35 @@ export function VaultHeader({
           <div className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <VaultButton size="sm">
+                <VaultButton size="sm" className="relative">
                   <Plus className="w-4 h-4" />
                 </VaultButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={onAddPassword}>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-48"
+                sideOffset={8}
+                avoidCollisions={true}
+                collisionPadding={16}
+              >
+                <DropdownMenuItem 
+                  onClick={onAddPassword}
+                  className="cursor-pointer"
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Password
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onGeneratePassword}>
+                <DropdownMenuItem 
+                  onClick={onGeneratePassword}
+                  className="cursor-pointer"
+                >
                   <KeyRound className="w-4 h-4 mr-2" />
                   Generate Password
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onLogout} className="text-destructive">
+                <DropdownMenuItem 
+                  onClick={onLogout} 
+                  className="text-destructive cursor-pointer focus:text-destructive"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
