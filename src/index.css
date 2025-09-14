@@ -103,6 +103,23 @@
     transform-origin: var(--radix-dropdown-menu-content-transform-origin) !important;
   }
 
+  /* Dialog stability fixes */
+  [data-radix-dialog-overlay] {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9998 !important;
+  }
+
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 9999 !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+
   /* Prevent layout shifts */
   .radix-dropdown-trigger {
     position: relative;
@@ -110,6 +127,19 @@
 
   .radix-dropdown-trigger[data-state="open"] {
     z-index: 1;
+  }
+
+  /* Prevent dialog movement on hover/interaction */
+  [role="dialog"] {
+    pointer-events: auto !important;
+    position: fixed !important;
+  }
+
+  /* Enhanced focus management for dialogs */
+  [data-state="open"][role="dialog"] {
+    transform: translate(-50%, -50%) !important;
+    left: 50% !important;
+    top: 50% !important;
   }
 
   @keyframes security-pulse {
