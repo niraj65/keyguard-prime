@@ -2,95 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Password Manager Design System - Security-focused dark theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Security-focused dark theme */
+    --background: 215 28% 8%;
+    --foreground: 213 31% 91%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 215 28% 10%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 215 28% 10%;
+    --popover-foreground: 213 31% 91%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary - Security Blue */
+    --primary: 208 100% 46%;
+    --primary-foreground: 213 31% 91%;
+    --primary-glow: 208 100% 60%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary - Professional slate */
+    --secondary: 215 25% 16%;
+    --secondary-foreground: 213 31% 91%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 215 25% 14%;
+    --muted-foreground: 213 20% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent - Success green for security */
+    --accent: 142 69% 58%;
+    --accent-foreground: 215 28% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Destructive - Warning red */
+    --destructive: 0 84% 58%;
+    --destructive-foreground: 213 31% 91%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 215 25% 18%;
+    --input: 215 25% 16%;
+    --ring: 208 100% 46%;
 
-    --radius: 0.5rem;
+    /* Security-specific colors */
+    --security-high: 142 69% 58%;
+    --security-medium: 45 93% 58%;
+    --security-low: 0 84% 58%;
+    --security-vault: 215 28% 12%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(208 100% 46%), hsl(208 100% 60%));
+    --gradient-vault: linear-gradient(180deg, hsl(215 28% 10%), hsl(215 28% 8%));
+    --gradient-security: linear-gradient(135deg, hsl(142 69% 58%), hsl(142 69% 48%));
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Shadows */
+    --shadow-vault: 0 8px 32px hsl(215 28% 4% / 0.5);
+    --shadow-security: 0 4px 20px hsl(208 100% 46% / 0.2);
+    --shadow-glow: 0 0 20px hsl(208 100% 60% / 0.3);
 
-    --sidebar-primary: 240 5.9% 10%;
+    --radius: 0.75rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Animations & Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }
 
@@ -100,6 +70,39 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    background: linear-gradient(180deg, hsl(var(--background)), hsl(215 28% 6%));
+    min-height: 100vh;
+  }
+
+  /* Security animations */
+  .security-glow {
+    box-shadow: var(--shadow-glow);
+    animation: security-pulse 3s infinite;
+  }
+
+  .vault-card {
+    background: hsl(var(--security-vault));
+    box-shadow: var(--shadow-vault);
+    transition: var(--transition-smooth);
+  }
+
+  .vault-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-vault), var(--shadow-security);
+  }
+
+  @keyframes security-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes vault-unlock {
+    0% { transform: scale(0.95) rotate(-1deg); opacity: 0.8; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .unlock-animation {
+    animation: vault-unlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 }

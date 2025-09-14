@@ -22,6 +22,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -46,6 +47,12 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        security: {
+          high: "hsl(var(--security-high))",
+          medium: "hsl(var(--security-medium))",
+          low: "hsl(var(--security-low))",
+          vault: "hsl(var(--security-vault))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -84,6 +91,8 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "security-pulse": "security-pulse 3s infinite",
+        "vault-unlock": "vault-unlock 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },
