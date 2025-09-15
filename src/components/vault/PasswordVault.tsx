@@ -96,6 +96,8 @@ export function PasswordVault({ masterPassword, onLogout }: PasswordVaultProps) 
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         entriesCount={vault.entries.length}
+        masterPassword={masterPassword}
+        onVaultUpdate={handleVaultUpdate}
       />
 
       <main className="container mx-auto px-4 py-6">

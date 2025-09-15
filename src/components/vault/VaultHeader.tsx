@@ -2,15 +2,19 @@
  * Header component for password vault
  */
 
-import { Search, Plus, KeyRound, LogOut, Shield } from 'lucide-react';
+import { Search, Plus, KeyRound, LogOut, Shield, Download, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { SecurityButton, VaultButton, DangerButton } from '@/components/ui/button-variants';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { downloadVaultFile, uploadVaultFile } from '@/lib/storage';
+import { useToast } from '@/hooks/use-toast';
+import { useRef } from 'react';
 
 interface VaultHeaderProps {
   onLogout: () => void;
@@ -19,6 +23,8 @@ interface VaultHeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   entriesCount: number;
+  masterPassword: string;
+  onVaultUpdate: () => void;
 }
 
 export function VaultHeader({
@@ -27,8 +33,65 @@ export function VaultHeader({
   onGeneratePassword,
   searchQuery,
   onSearchChange,
-  entriesCount
+  entriesCount,
+  masterPassword,
+  onVaultUpdate
 }: VaultHeaderProps) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownload = async () => {
+    const success = await downloadVaultFile(masterPassword);
+    if (success) {
+      toast({
+        title: "Vault Downloaded",
+        description: "Your encrypted vault file has been downloaded successfully.",
+      });
+    } else {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download vault file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const success = await uploadVaultFile(file, masterPassword);
+      if (success) {
+        onVaultUpdate();
+        toast({
+          title: "Vault Imported",
+          description: "Your vault file has been imported successfully.",
+        });
+      } else {
+        toast({
+          title: "Import Failed",
+          description: "Failed to import vault file. Please check your master password.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Import Error",
+        description: "Invalid vault file or wrong master password.",
+        variant: "destructive",
+      });
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
   return (
     <header className="border-b border-border/20 bg-security-vault">
       <div className="container mx-auto px-4 py-4">
@@ -67,6 +130,16 @@ export function VaultHeader({
               <Plus className="w-4 h-4 mr-2" />
               Add Password
             </SecurityButton>
+
+            <VaultButton onClick={handleDownload} size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </VaultButton>
+
+            <VaultButton onClick={handleUpload} size="sm">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
+            </VaultButton>
             
             <DangerButton onClick={onLogout} size="sm">
               <LogOut className="w-4 h-4" />
@@ -102,6 +175,22 @@ export function VaultHeader({
                   <KeyRound className="w-4 h-4 mr-2" />
                   Generate Password
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleDownload}
+                  className="cursor-pointer"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Export Vault
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleUpload}
+                  className="cursor-pointer"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Import Vault
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={onLogout} 
                   className="text-destructive cursor-pointer focus:text-destructive"
@@ -126,6 +215,15 @@ export function VaultHeader({
             />
           </div>
         </div>
+        
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pmvault,.json"
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
       </div>
     </header>
   );

@@ -1,15 +1,19 @@
 /**
- * Secure local storage utilities for password manager
- * Handles encrypted storage of password entries and master password verification
+ * Secure file-based storage utilities for password manager
+ * Handles encrypted file storage of password entries with download/upload functionality
  */
 
 import { encryptData, decryptData, type PasswordEntry, type EncryptedData } from './encryption';
 
 const STORAGE_KEYS = {
-  VAULT: 'pm_vault',
   MASTER_HASH: 'pm_master_hash',
   SETTINGS: 'pm_settings'
 } as const;
+
+const VAULT_FILE_NAME = 'secure_vault.pmvault';
+
+// In-memory vault storage for current session
+let currentVaultData: VaultData | null = null;
 
 export interface VaultData {
   entries: PasswordEntry[];
@@ -80,13 +84,11 @@ export function isMasterPasswordSetup(): boolean {
 }
 
 /**
- * Saves the vault data encrypted to localStorage
+ * Saves the vault data to in-memory storage
  */
 export async function saveVault(vaultData: VaultData, masterPassword: string): Promise<boolean> {
   try {
-    const jsonData = JSON.stringify(vaultData);
-    const encryptedData = await encryptData(jsonData, masterPassword);
-    localStorage.setItem(STORAGE_KEYS.VAULT, JSON.stringify(encryptedData));
+    currentVaultData = vaultData;
     return true;
   } catch (error) {
     console.error('Failed to save vault:', error);
@@ -95,20 +97,76 @@ export async function saveVault(vaultData: VaultData, masterPassword: string): P
 }
 
 /**
- * Loads the vault data from localStorage and decrypts it
+ * Loads the vault data from in-memory storage
  */
 export async function loadVault(masterPassword: string): Promise<VaultData | null> {
   try {
-    const encryptedString = localStorage.getItem(STORAGE_KEYS.VAULT);
-    if (!encryptedString) return null;
-    
-    const encryptedData: EncryptedData = JSON.parse(encryptedString);
-    const decryptedString = await decryptData(encryptedData, masterPassword);
-    return JSON.parse(decryptedString);
+    if (!currentVaultData) {
+      // Return empty vault if no data loaded
+      return {
+        entries: [],
+        version: '1.0.0',
+        lastModified: new Date().toISOString()
+      };
+    }
+    return currentVaultData;
   } catch (error) {
     console.error('Failed to load vault:', error);
     return null;
   }
+}
+
+/**
+ * Downloads the encrypted vault file
+ */
+export async function downloadVaultFile(masterPassword: string): Promise<boolean> {
+  try {
+    if (!currentVaultData) return false;
+    
+    const jsonData = JSON.stringify(currentVaultData);
+    const encryptedData = await encryptData(jsonData, masterPassword);
+    
+    const blob = new Blob([JSON.stringify(encryptedData)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = VAULT_FILE_NAME;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+    return true;
+  } catch (error) {
+    console.error('Failed to download vault file:', error);
+    return false;
+  }
+}
+
+/**
+ * Uploads and loads an encrypted vault file
+ */
+export async function uploadVaultFile(file: File, masterPassword: string): Promise<boolean> {
+  try {
+    const fileContent = await file.text();
+    const encryptedData: EncryptedData = JSON.parse(fileContent);
+    const decryptedString = await decryptData(encryptedData, masterPassword);
+    const vaultData: VaultData = JSON.parse(decryptedString);
+    
+    currentVaultData = vaultData;
+    return true;
+  } catch (error) {
+    console.error('Failed to upload vault file:', error);
+    return false;
+  }
+}
+
+/**
+ * Checks if vault data exists in memory
+ */
+export function hasVaultData(): boolean {
+  return currentVaultData !== null && currentVaultData.entries.length > 0;
 }
 
 /**
@@ -246,4 +304,5 @@ export function clearAllData(): void {
   Object.values(STORAGE_KEYS).forEach(key => {
     localStorage.removeItem(key);
   });
+  currentVaultData = null;
 }
