@@ -2,7 +2,7 @@
  * Master password setup component for first-time users
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,8 +10,14 @@ import { SecurityButton } from '@/components/ui/button-variants';
 import { setupMasterPassword } from '@/lib/storage';
 import { calculatePasswordStrength } from '@/lib/encryption';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Shield, Eye, EyeOff, CheckCircle, AlertTriangle, Fingerprint } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { 
+  isBiometricAvailable, 
+  storeMasterPasswordWithBiometric, 
+  enableBiometricAuth 
+} from '@/lib/biometric';
 
 interface MasterPasswordSetupProps {
   onSetupComplete: (password: string) => void;
@@ -22,7 +28,17 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [enableBiometric, setEnableBiometric] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkBiometric = async () => {
+      const available = await isBiometricAvailable();
+      setBiometricAvailable(available);
+    };
+    checkBiometric();
+  }, []);
 
   const { score, feedback } = calculatePasswordStrength(password);
   const passwordsMatch = password && confirmPassword && password === confirmPassword;
@@ -50,10 +66,27 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
     try {
       const success = await setupMasterPassword(password);
       if (success) {
-        toast({
-          title: "Vault Created Successfully",
-          description: "Your secure password vault has been initialized.",
-        });
+        // Set up biometric authentication if requested
+        if (enableBiometric && biometricAvailable) {
+          const biometricStored = await storeMasterPasswordWithBiometric(password);
+          if (biometricStored) {
+            enableBiometricAuth();
+            toast({
+              title: "Vault Created with Biometrics",
+              description: "Your secure password vault has been initialized with biometric authentication.",
+            });
+          } else {
+            toast({
+              title: "Vault Created",
+              description: "Your secure password vault has been initialized. Biometric setup failed but you can enable it later.",
+            });
+          }
+        } else {
+          toast({
+            title: "Vault Created Successfully",
+            description: "Your secure password vault has been initialized.",
+          });
+        }
         onSetupComplete(password);
       } else {
         toast({
@@ -163,6 +196,28 @@ export function MasterPasswordSetup({ onSetupComplete }: MasterPasswordSetupProp
                 <p className="text-xs text-security-low">Passwords do not match</p>
               )}
             </div>
+
+            {biometricAvailable && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="enable-biometric" 
+                    checked={enableBiometric}
+                    onCheckedChange={(checked) => setEnableBiometric(checked === true)}
+                  />
+                  <Label 
+                    htmlFor="enable-biometric" 
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                  >
+                    <Fingerprint className="w-4 h-4 text-primary" />
+                    Enable biometric authentication
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground ml-6">
+                  Use fingerprint or face recognition to quickly unlock your vault
+                </p>
+              </div>
+            )}
 
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <h4 className="font-semibold text-sm flex items-center gap-2">

@@ -2,14 +2,19 @@
  * Master password login component for returning users
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SecurityButton, DangerButton } from '@/components/ui/button-variants';
 import { verifyMasterPassword, clearAllData } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Eye, EyeOff, AlertTriangle, Trash2 } from 'lucide-react';
+import { Shield, Eye, EyeOff, AlertTriangle, Trash2, Fingerprint } from 'lucide-react';
+import { 
+  isBiometricAvailable, 
+  getMasterPasswordWithBiometric, 
+  hasBiometricCredentials 
+} from '@/lib/biometric';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,10 +36,63 @@ export function MasterPasswordLogin({ onLoginSuccess }: MasterPasswordLoginProps
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [hasBiometric, setHasBiometric] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkBiometric = async () => {
+      const available = await isBiometricAvailable();
+      const hasCredentials = await hasBiometricCredentials();
+      setBiometricAvailable(available);
+      setHasBiometric(hasCredentials);
+    };
+    checkBiometric();
+  }, []);
 
   const maxAttempts = 5;
   const isLocked = attempts >= maxAttempts;
+
+  const handleBiometricLogin = async () => {
+    if (!biometricAvailable || !hasBiometric) return;
+
+    setIsLoading(true);
+    try {
+      const result = await getMasterPasswordWithBiometric();
+      
+      if (result.success && result.masterPassword) {
+        const isValid = await verifyMasterPassword(result.masterPassword);
+        
+        if (isValid) {
+          toast({
+            title: "Welcome Back",
+            description: "Successfully unlocked your password vault with biometrics.",
+          });
+          onLoginSuccess(result.masterPassword);
+        } else {
+          toast({
+            title: "Biometric Error",
+            description: "Biometric authentication succeeded but password verification failed.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Biometric Failed",
+          description: result.error || "Biometric authentication failed.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Biometric Error",
+        description: "An error occurred during biometric authentication.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,9 +164,34 @@ export function MasterPasswordLogin({ onLoginSuccess }: MasterPasswordLoginProps
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="master-password">Master Password</Label>
+          <div className="space-y-6">
+            {biometricAvailable && hasBiometric && (
+              <div className="space-y-4">
+                <SecurityButton
+                  onClick={handleBiometricLogin}
+                  className="w-full"
+                  disabled={isLoading || isLocked}
+                >
+                  <Fingerprint className="w-4 h-4 mr-2" />
+                  {isLoading ? 'Authenticating...' : 'Unlock with Biometrics'}
+                </SecurityButton>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or use master password
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="master-password">Master Password</Label>
               <div className="relative">
                 <Input
                   id="master-password"
@@ -190,7 +273,8 @@ export function MasterPasswordLogin({ onLoginSuccess }: MasterPasswordLoginProps
                 </AlertDialog>
               </div>
             )}
-          </form>
+            </form>
+          </div>
         </CardContent>
       </Card>
     </div>
