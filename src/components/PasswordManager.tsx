@@ -3,33 +3,43 @@
  */
 
 import { useState, useEffect } from 'react';
+import { VaultInitial } from './auth/VaultInitial';
 import { MasterPasswordSetup } from './auth/MasterPasswordSetup';
 import { MasterPasswordLogin } from './auth/MasterPasswordLogin';
 import { PasswordVault } from './vault/PasswordVault';
-import { isMasterPasswordSetup } from '@/lib/storage';
+import { hasVaultSetup, verifyMasterPassword } from '@/lib/storage';
 import { Loader2, Shield } from 'lucide-react';
 
 export function PasswordManager() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [masterPassword, setMasterPassword] = useState<string>('');
-  const [isSetup, setIsSetup] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [vaultState, setVaultState] = useState<'loading' | 'initial' | 'setup' | 'login'>('loading');
 
   useEffect(() => {
-    // Check if master password is already set up
-    const checkSetup = async () => {
-      const setupStatus = isMasterPasswordSetup();
-      setIsSetup(setupStatus);
-      setIsLoading(false);
+    // Check if vault is already loaded
+    const checkVaultState = async () => {
+      const hasVault = hasVaultSetup();
+      if (hasVault) {
+        setVaultState('login');
+      } else {
+        setVaultState('initial');
+      }
     };
     
-    checkSetup();
+    checkVaultState();
   }, []);
+
+  const handleImportSuccess = () => {
+    setVaultState('login');
+  };
+
+  const handleCreateNew = () => {
+    setVaultState('setup');
+  };
 
   const handleSetupComplete = (password: string) => {
     setMasterPassword(password);
     setIsAuthenticated(true);
-    setIsSetup(true);
   };
 
   const handleLoginSuccess = (password: string) => {
@@ -40,10 +50,10 @@ export function PasswordManager() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setMasterPassword('');
-    // Don't clear setup status on logout
+    setVaultState('initial');
   };
 
-  if (isLoading) {
+  if (vaultState === 'loading') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -66,7 +76,16 @@ export function PasswordManager() {
     );
   }
 
-  if (isSetup === false) {
+  if (vaultState === 'initial') {
+    return (
+      <VaultInitial 
+        onImportSuccess={handleImportSuccess}
+        onCreateNew={handleCreateNew}
+      />
+    );
+  }
+
+  if (vaultState === 'setup') {
     return <MasterPasswordSetup onSetupComplete={handleSetupComplete} />;
   }
 

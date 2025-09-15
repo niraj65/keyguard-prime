@@ -19,6 +19,7 @@ export interface VaultData {
   entries: PasswordEntry[];
   version: string;
   lastModified: string;
+  masterPasswordHash: string;
 }
 
 export interface AppSettings {
@@ -43,13 +44,13 @@ async function hashMasterPassword(masterPassword: string): Promise<string> {
 export async function setupMasterPassword(masterPassword: string): Promise<boolean> {
   try {
     const hash = await hashMasterPassword(masterPassword);
-    localStorage.setItem(STORAGE_KEYS.MASTER_HASH, hash);
     
-    // Initialize empty vault
+    // Initialize empty vault with master password hash
     const emptyVault: VaultData = {
       entries: [],
       version: '1.0.0',
-      lastModified: new Date().toISOString()
+      lastModified: new Date().toISOString(),
+      masterPasswordHash: hash
     };
     
     await saveVault(emptyVault, masterPassword);
@@ -61,15 +62,14 @@ export async function setupMasterPassword(masterPassword: string): Promise<boole
 }
 
 /**
- * Verifies the master password
+ * Verifies the master password against the vault data
  */
 export async function verifyMasterPassword(masterPassword: string): Promise<boolean> {
   try {
-    const storedHash = localStorage.getItem(STORAGE_KEYS.MASTER_HASH);
-    if (!storedHash) return false;
+    if (!currentVaultData?.masterPasswordHash) return false;
     
     const inputHash = await hashMasterPassword(masterPassword);
-    return storedHash === inputHash;
+    return currentVaultData.masterPasswordHash === inputHash;
   } catch (error) {
     console.error('Failed to verify master password:', error);
     return false;
@@ -77,10 +77,10 @@ export async function verifyMasterPassword(masterPassword: string): Promise<bool
 }
 
 /**
- * Checks if master password is already set up
+ * Checks if vault data exists (indicating setup is complete)
  */
-export function isMasterPasswordSetup(): boolean {
-  return !!localStorage.getItem(STORAGE_KEYS.MASTER_HASH);
+export function hasVaultSetup(): boolean {
+  return currentVaultData !== null && !!currentVaultData.masterPasswordHash;
 }
 
 /**
@@ -102,12 +102,8 @@ export async function saveVault(vaultData: VaultData, masterPassword: string): P
 export async function loadVault(masterPassword: string): Promise<VaultData | null> {
   try {
     if (!currentVaultData) {
-      // Return empty vault if no data loaded
-      return {
-        entries: [],
-        version: '1.0.0',
-        lastModified: new Date().toISOString()
-      };
+      // Return null if no vault is loaded
+      return null;
     }
     return currentVaultData;
   } catch (error) {
