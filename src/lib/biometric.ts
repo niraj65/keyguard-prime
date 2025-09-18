@@ -17,12 +17,13 @@ export interface BiometricAuthResult {
  */
 export async function isBiometricAvailable(): Promise<boolean> {
   try {
-    // For now, we'll simulate biometric availability based on platform
+    // For demo purposes, we'll make biometrics available on all platforms
     // In a real implementation, you'd use a proper biometric plugin
     if (Capacitor.isNativePlatform()) {
       return true; // Assume biometrics are available on native platforms
     }
-    return false; // Not available on web
+    // For web demo, simulate biometric availability
+    return true; // Available on web for demo
   } catch (error) {
     console.log('Biometric not available:', error);
     return false;
@@ -65,16 +66,13 @@ export async function storeMasterPasswordWithBiometric(masterPassword: string): 
  */
 export async function getMasterPasswordWithBiometric(): Promise<BiometricAuthResult> {
   try {
-    // Simulate biometric prompt
-    if (Capacitor.isNativePlatform()) {
-      // In a real implementation, this would show native biometric prompt
-      const confirmed = confirm('Use biometric authentication to unlock vault?');
-      if (!confirmed) {
-        return {
-          success: false,
-          error: 'Biometric authentication cancelled'
-        };
-      }
+    // Simulate biometric prompt for all platforms
+    const confirmed = confirm('Use biometric authentication to unlock vault?');
+    if (!confirmed) {
+      return {
+        success: false,
+        error: 'Biometric authentication cancelled'
+      };
     }
     
     const encrypted = localStorage.getItem(BIOMETRIC_KEY);

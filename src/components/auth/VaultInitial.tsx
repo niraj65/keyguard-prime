@@ -2,14 +2,19 @@
  * Initial screen for vault - Import existing or Create new
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SecurityButton } from '@/components/ui/button-variants';
 import { uploadVaultFile } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, Upload, Plus, FileKey } from 'lucide-react';
+import { Shield, Upload, Plus, FileKey, Fingerprint } from 'lucide-react';
+import { 
+  isBiometricAvailable, 
+  hasBiometricCredentials,
+  getMasterPasswordWithBiometric 
+} from '@/lib/biometric';
 
 interface VaultInitialProps {
   onImportSuccess: () => void;
@@ -20,7 +25,19 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
   const [isImporting, setIsImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importPassword, setImportPassword] = useState('');
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [hasBiometric, setHasBiometric] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkBiometric = async () => {
+      const available = await isBiometricAvailable();
+      const hasCredentials = await hasBiometricCredentials();
+      setBiometricAvailable(available);
+      setHasBiometric(hasCredentials);
+    };
+    checkBiometric();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,6 +51,45 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
           variant: "destructive",
         });
       }
+    }
+  };
+
+  const handleBiometricImport = async () => {
+    if (!selectedFile) return;
+
+    setIsImporting(true);
+    try {
+      const biometricResult = await getMasterPasswordWithBiometric();
+      if (biometricResult.success && biometricResult.masterPassword) {
+        const success = await uploadVaultFile(selectedFile, biometricResult.masterPassword);
+        if (success) {
+          toast({
+            title: "Vault Imported Successfully",
+            description: "Your password vault has been loaded using biometric authentication.",
+          });
+          onImportSuccess();
+        } else {
+          toast({
+            title: "Import Failed",
+            description: "Invalid file or biometric credentials don't match this vault.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Biometric Authentication Failed",
+          description: biometricResult.error || "Could not authenticate with biometrics.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Import Error",
+        description: "Failed to import vault file with biometric authentication.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -133,12 +189,25 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
                   />
                 </div>
 
+                {biometricAvailable && hasBiometric && selectedFile && (
+                  <SecurityButton
+                    type="button"
+                    onClick={handleBiometricImport}
+                    className="w-full mb-3"
+                    disabled={isImporting}
+                    variant="outline"
+                  >
+                    <Fingerprint className="w-4 h-4 mr-2" />
+                    {isImporting ? 'Importing...' : 'Import with Biometrics'}
+                  </SecurityButton>
+                )}
+
                 <SecurityButton
                   type="submit"
                   className="w-full"
                   disabled={!selectedFile || !importPassword || isImporting}
                 >
-                  {isImporting ? 'Importing...' : 'Import Vault'}
+                  {isImporting ? 'Importing...' : 'Import with Password'}
                 </SecurityButton>
               </form>
             </CardContent>
