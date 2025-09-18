@@ -4,6 +4,22 @@
 
 import { Capacitor } from '@capacitor/core';
 
+// Types for biometric authentication (defined locally until plugin is added)
+interface BiometricResult {
+  isAvailable: boolean;
+  biometryType?: string;
+}
+
+interface BiometricSecret {
+  key: string;
+  value: string;
+  promptMessage: string;
+}
+
+interface BiometricSecretResult {
+  value: string;
+}
+
 const BIOMETRIC_KEY = 'secure_vault_master_password';
 
 export interface BiometricAuthResult {
@@ -17,13 +33,16 @@ export interface BiometricAuthResult {
  */
 export async function isBiometricAvailable(): Promise<boolean> {
   try {
-    // For demo purposes, we'll make biometrics available on all platforms
-    // In a real implementation, you'd use a proper biometric plugin
     if (Capacitor.isNativePlatform()) {
-      return true; // Assume biometrics are available on native platforms
+      // TODO: Replace with actual plugin when @capacitor-community/biometric-auth is installed
+      // const result = await BiometricAuth.isAvailable();
+      // return result.isAvailable;
+      
+      // For now, assume biometrics are available on native platforms
+      return true;
     }
-    // For web demo, simulate biometric availability
-    return true; // Available on web for demo
+    // For web, biometrics aren't available (use fallback)
+    return false;
   } catch (error) {
     console.log('Biometric not available:', error);
     return false;
@@ -36,7 +55,12 @@ export async function isBiometricAvailable(): Promise<boolean> {
 export async function getBiometricType(): Promise<string | null> {
   try {
     if (Capacitor.isNativePlatform()) {
-      return 'fingerprint'; // Simplified for demo
+      // TODO: Replace with actual plugin implementation
+      // const result = await BiometricAuth.isAvailable();
+      // return result.biometryType === 'fingerprint' ? 'fingerprint' : 'face';
+      
+      // For now, return fingerprint as default
+      return 'fingerprint';
     }
     return null;
   } catch (error) {
@@ -50,11 +74,24 @@ export async function getBiometricType(): Promise<string | null> {
  */
 export async function storeMasterPasswordWithBiometric(masterPassword: string): Promise<boolean> {
   try {
-    // For demo purposes, we'll encrypt and store in localStorage
-    // In a real implementation, this would use secure native storage
-    const encrypted = btoa(masterPassword); // Simple encoding for demo
-    localStorage.setItem(BIOMETRIC_KEY, encrypted);
-    return true;
+    if (Capacitor.isNativePlatform()) {
+      // TODO: Replace with actual plugin when installed
+      // await BiometricAuth.setBiometricSecret({
+      //   key: BIOMETRIC_KEY,
+      //   value: masterPassword,
+      //   promptMessage: 'Store your master password securely'
+      // });
+      
+      // For now, use secure storage simulation
+      const encrypted = btoa(masterPassword + ':native');
+      localStorage.setItem(BIOMETRIC_KEY + '_native', encrypted);
+      return true;
+    } else {
+      // Fallback for web - simple encoding (not secure for production)
+      const encrypted = btoa(masterPassword);
+      localStorage.setItem(BIOMETRIC_KEY, encrypted);
+      return true;
+    }
   } catch (error) {
     console.error('Failed to store master password with biometric:', error);
     return false;
@@ -66,28 +103,60 @@ export async function storeMasterPasswordWithBiometric(masterPassword: string): 
  */
 export async function getMasterPasswordWithBiometric(): Promise<BiometricAuthResult> {
   try {
-    // Simulate biometric prompt for all platforms
-    const confirmed = confirm('Use biometric authentication to unlock vault?');
-    if (!confirmed) {
+    if (Capacitor.isNativePlatform()) {
+      // TODO: Replace with actual plugin implementation
+      // const result = await BiometricAuth.getBiometricSecret({
+      //   key: BIOMETRIC_KEY,
+      //   promptMessage: 'Use biometric authentication to unlock your vault'
+      // });
+      // return { success: true, masterPassword: result.value };
+      
+      // For now, simulate native biometric prompt
+      const confirmed = confirm('🔒 Use fingerprint to unlock your vault?');
+      if (!confirmed) {
+        return {
+          success: false,
+          error: 'Biometric authentication cancelled'
+        };
+      }
+      
+      const encrypted = localStorage.getItem(BIOMETRIC_KEY + '_native');
+      if (!encrypted) {
+        return {
+          success: false,
+          error: 'No biometric credentials stored'
+        };
+      }
+      
+      const masterPassword = atob(encrypted).replace(':native', '');
       return {
-        success: false,
-        error: 'Biometric authentication cancelled'
+        success: true,
+        masterPassword
+      };
+    } else {
+      // Fallback for web - simple confirm dialog
+      const confirmed = confirm('Use biometric authentication to unlock vault? (Web Demo)');
+      if (!confirmed) {
+        return {
+          success: false,
+          error: 'Biometric authentication cancelled'
+        };
+      }
+      
+      const encrypted = localStorage.getItem(BIOMETRIC_KEY);
+      if (!encrypted) {
+        return {
+          success: false,
+          error: 'No biometric credentials stored'
+        };
+      }
+      
+      const masterPassword = atob(encrypted);
+      return {
+        success: true,
+        masterPassword
       };
     }
-    
-    const encrypted = localStorage.getItem(BIOMETRIC_KEY);
-    if (!encrypted) {
-      return {
-        success: false,
-        error: 'No biometric credentials stored'
-      };
-    }
-    
-    const masterPassword = atob(encrypted); // Simple decoding for demo
-    return {
-      success: true,
-      masterPassword
-    };
   } catch (error: any) {
     console.log('Biometric authentication failed:', error);
     return {
@@ -102,7 +171,13 @@ export async function getMasterPasswordWithBiometric(): Promise<BiometricAuthRes
  */
 export async function deleteBiometricCredentials(): Promise<boolean> {
   try {
-    localStorage.removeItem(BIOMETRIC_KEY);
+    if (Capacitor.isNativePlatform()) {
+      // TODO: Replace with actual plugin
+      // await BiometricAuth.deleteBiometricSecret({ key: BIOMETRIC_KEY });
+      localStorage.removeItem(BIOMETRIC_KEY + '_native');
+    } else {
+      localStorage.removeItem(BIOMETRIC_KEY);
+    }
     return true;
   } catch (error) {
     console.error('Failed to delete biometric credentials:', error);
@@ -115,13 +190,17 @@ export async function deleteBiometricCredentials(): Promise<boolean> {
  */
 export async function hasBiometricCredentials(): Promise<boolean> {
   try {
-    // Try to check if credentials exist by attempting to get them
-    // This is a bit hacky but the plugin doesn't have a direct "exists" method
     const available = await isBiometricAvailable();
     if (!available) return false;
     
-    // We'll store a flag in localStorage to track if biometric is set up
-    return localStorage.getItem('biometric_enabled') === 'true';
+    if (Capacitor.isNativePlatform()) {
+      // Check if credentials exist in native storage
+      const stored = localStorage.getItem(BIOMETRIC_KEY + '_native');
+      return !!stored;
+    } else {
+      // For web, check localStorage flag
+      return localStorage.getItem('biometric_enabled') === 'true';
+    }
   } catch (error) {
     return false;
   }
