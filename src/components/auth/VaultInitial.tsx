@@ -15,8 +15,6 @@ import {
   hasBiometricCredentials,
   getMasterPasswordWithBiometric 
 } from '@/lib/biometric';
-import { VaultFileScanner } from '../vault/VaultFileScanner';
-import { isPWA } from '@/lib/fileSystem';
 
 interface VaultInitialProps {
   onImportSuccess: () => void;
@@ -29,7 +27,6 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
   const [importPassword, setImportPassword] = useState('');
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [hasBiometric, setHasBiometric] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,15 +36,7 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
       setBiometricAvailable(available);
       setHasBiometric(hasCredentials);
     };
-    
-    const checkPWA = () => {
-      if (isPWA()) {
-        setShowScanner(true);
-      }
-    };
-    
     checkBiometric();
-    checkPWA();
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,10 +124,6 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
     }
   };
 
-  const handleFileFromScanner = (file: File) => {
-    setSelectedFile(file);
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
@@ -154,14 +139,6 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
             </p>
           </div>
         </div>
-
-        {/* PWA File Scanner */}
-        {showScanner && (
-          <VaultFileScanner
-            onFileSelected={handleFileFromScanner}
-            onScanComplete={() => {}}
-          />
-        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Import Existing Vault */}

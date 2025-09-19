@@ -23,14 +23,5 @@
   ],
   "categories": ["productivity", "security", "utilities"],
   "lang": "en",
-  "dir": "ltr",
-  "file_handlers": [
-    {
-      "action": "/",
-      "accept": {
-        "application/octet-stream": [".pmvault"],
-        "application/json": [".pmvault"]
-      }
-    }
-  ]
+  "dir": "ltr"
 }
