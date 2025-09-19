@@ -122,12 +122,16 @@ export async function downloadVaultFile(masterPassword: string): Promise<boolean
     const jsonData = JSON.stringify(currentVaultData);
     const encryptedData = await encryptData(jsonData, masterPassword);
     
-    const blob = new Blob([JSON.stringify(encryptedData)], { type: 'application/json' });
+    // Create proper .pmvault file without .json extension
+    const blob = new Blob([JSON.stringify(encryptedData)], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     
     const link = document.createElement('a');
     link.href = url;
     link.download = VAULT_FILE_NAME;
+    // Add explicit attributes for mobile compatibility
+    link.setAttribute('download', VAULT_FILE_NAME);
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -291,6 +295,23 @@ function getDefaultSettings(): AppSettings {
     clipboardClearTimeout: 30, // 30 seconds
     showPasswords: false
   };
+}
+
+/**
+ * Deletes the current vault completely
+ */
+export async function deleteVault(): Promise<boolean> {
+  try {
+    currentVaultData = null;
+    // Clear any stored vault-related data
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to delete vault:', error);
+    return false;
+  }
 }
 
 /**

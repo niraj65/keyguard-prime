@@ -53,6 +53,12 @@ export function PasswordManager() {
     setVaultState('initial');
   };
 
+  const handleVaultDeleted = () => {
+    setIsAuthenticated(false);
+    setMasterPassword('');
+    setVaultState('initial');
+  };
+
   if (vaultState === 'loading') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -72,6 +78,7 @@ export function PasswordManager() {
       <PasswordVault 
         masterPassword={masterPassword} 
         onLogout={handleLogout}
+        onVaultDeleted={handleVaultDeleted}
       />
     );
   }

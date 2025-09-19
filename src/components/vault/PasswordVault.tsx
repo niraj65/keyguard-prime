@@ -16,9 +16,10 @@ import { Loader2, Shield } from 'lucide-react';
 interface PasswordVaultProps {
   masterPassword: string;
   onLogout: () => void;
+  onVaultDeleted: () => void;
 }
 
-export function PasswordVault({ masterPassword, onLogout }: PasswordVaultProps) {
+export function PasswordVault({ masterPassword, onLogout, onVaultDeleted }: PasswordVaultProps) {
   const [vault, setVault] = useState<VaultData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +99,7 @@ export function PasswordVault({ masterPassword, onLogout }: PasswordVaultProps) 
         entriesCount={vault.entries.length}
         masterPassword={masterPassword}
         onVaultUpdate={handleVaultUpdate}
+        onVaultDeleted={onVaultDeleted}
       />
 
       <main className="container mx-auto px-4 py-6">

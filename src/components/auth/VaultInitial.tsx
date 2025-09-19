@@ -163,7 +163,8 @@ export function VaultInitial({ onImportSuccess, onCreateNew }: VaultInitialProps
                     <Input
                       id="vault-file"
                       type="file"
-                      accept=".pmvault"
+                      accept=".pmvault,application/octet-stream"
+                      capture={false}
                       onChange={handleFileSelect}
                       className="cursor-pointer"
                       required

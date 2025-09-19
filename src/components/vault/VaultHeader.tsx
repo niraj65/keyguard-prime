@@ -2,7 +2,8 @@
  * Header component for password vault
  */
 
-import { Search, Plus, KeyRound, LogOut, Shield, Download, Upload } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Search, Plus, KeyRound, LogOut, Shield, Download, Upload, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { SecurityButton, VaultButton, DangerButton } from '@/components/ui/button-variants';
 import {
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { downloadVaultFile, uploadVaultFile } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
-import { useRef } from 'react';
+import { DeleteVaultDialog } from './DeleteVaultDialog';
 
 interface VaultHeaderProps {
   onLogout: () => void;
@@ -25,6 +26,7 @@ interface VaultHeaderProps {
   entriesCount: number;
   masterPassword: string;
   onVaultUpdate: () => void;
+  onVaultDeleted: () => void;
 }
 
 export function VaultHeader({
@@ -35,8 +37,10 @@ export function VaultHeader({
   onSearchChange,
   entriesCount,
   masterPassword,
-  onVaultUpdate
+  onVaultUpdate,
+  onVaultDeleted
 }: VaultHeaderProps) {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -192,6 +196,13 @@ export function VaultHeader({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive cursor-pointer focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Vault
+                </DropdownMenuItem>
+                <DropdownMenuItem 
                   onClick={onLogout} 
                   className="text-destructive cursor-pointer focus:text-destructive"
                 >
@@ -220,11 +231,17 @@ export function VaultHeader({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pmvault,.json"
+          accept=".pmvault,application/octet-stream"
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />
       </div>
+      
+      <DeleteVaultDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onVaultDeleted={onVaultDeleted}
+      />
     </header>
   );
 }
