@@ -59,7 +59,8 @@ export function DeleteVaultDialog({ open, onOpenChange, onVaultDeleted }: Delete
       if (success) {
         toast({
           title: "Vault Deleted",
-          description: "Your password vault has been permanently deleted.",
+          description: "Your password vault has been permanently deleted from memory and cache. Note: Downloaded vault files in your device storage must be manually deleted.",
+          duration: 6000,
         });
         onVaultDeleted();
         handleClose();
@@ -100,7 +101,14 @@ export function DeleteVaultDialog({ open, onOpenChange, onVaultDeleted }: Delete
               <div className="space-y-2">
                 <p>This action will permanently delete your entire password vault and cannot be undone.</p>
                 <p className="text-destructive font-semibold">All your stored passwords will be lost forever.</p>
-                <p>Make sure you have a backup of your vault file before proceeding.</p>
+                <div className="bg-muted p-3 rounded-lg text-xs space-y-1">
+                  <p className="font-semibold">What will be deleted:</p>
+                  <p>• All password entries from memory</p>
+                  <p>• Application cache and stored data</p>
+                  <p>• Biometric credentials (if any)</p>
+                  <p className="text-muted-foreground mt-2">Note: Downloaded .pmvault files on your device storage must be manually deleted.</p>
+                </div>
+                <p>Make sure you have a backup if you want to keep your passwords.</p>
               </div>
             ) : (
               <div className="space-y-3">

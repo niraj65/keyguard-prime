@@ -298,15 +298,35 @@ function getDefaultSettings(): AppSettings {
 }
 
 /**
- * Deletes the current vault completely
+ * Deletes the current vault completely and attempts to remove local files
  */
 export async function deleteVault(): Promise<boolean> {
   try {
     currentVaultData = null;
-    // Clear any stored vault-related data
+    
+    // Clear localStorage data
     Object.values(STORAGE_KEYS).forEach(key => {
       localStorage.removeItem(key);
     });
+    
+    // Clear session storage as well
+    sessionStorage.clear();
+    
+    // Clear any cached vault data
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+      } catch (error) {
+        console.warn('Failed to clear caches:', error);
+      }
+    }
+    
+    // Note: We cannot directly delete downloaded files due to browser security restrictions
+    // The browser manages downloaded files, and web apps cannot delete them programmatically
+    
     return true;
   } catch (error) {
     console.error('Failed to delete vault:', error);
